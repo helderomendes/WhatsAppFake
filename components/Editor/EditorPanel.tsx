@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { AppState, Contact, Message, MessageType } from '../../types';
-import { COMMON_EMOJIS } from '../../constants';
+import { COMMON_EMOJIS, INITIAL_STATE, WHATSAPP_DEFAULT_IMAGE, DEFAULT_AVATAR } from '../../constants';
 import { generateConversation } from '../../services/geminiService';
 
 interface EditorPanelProps {
@@ -16,7 +16,20 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ state, setState }) => {
   const [aiPrompt, setAiPrompt] = useState('');
 
   const updateConfig = (key: string, value: any) => {
-    setState(p => ({ ...p, config: { ...p.config, [key]: value } }));
+    setState(p => {
+      let newConfig = { ...p.config, [key]: value };
+      
+      // Ao mudar o tema, atualiza automaticamente a cor de fundo padrão se o usuário estiver usando cores sólidas
+      if (key === 'theme') {
+        if (value === 'dark') {
+          newConfig.backgroundColor = '#0b141a';
+        } else {
+          newConfig.backgroundColor = '#e5ddd5';
+        }
+      }
+      
+      return { ...p, config: newConfig };
+    });
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => {
@@ -34,8 +47,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ state, setState }) => {
     try {
       const result = await generateConversation(aiPrompt, state.contacts);
       const newMessages: Message[] = result.messages.map((m: any, idx: number) => {
-        let senderId = state.mainUser.id; // Default to me
-        
+        let senderId = state.mainUser.id;
         const senderName = m.senderName?.toLowerCase() || '';
         if (senderName !== 'eu' && senderName !== 'você' && senderName !== 'me') {
            const found = state.contacts.find(c => c.name.toLowerCase().includes(senderName));
@@ -69,16 +81,16 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ state, setState }) => {
     const msg: Message = {
       id: `msg-${Date.now()}`,
       senderId: state.mainUser.id,
-      content: type === 'text' ? 'Nova mensagem' : (type === 'system' ? 'Criptografia ativa.' : ''),
+      content: type === 'text' ? 'Olá!' : (type === 'system' ? 'Criptografia ativa.' : ''),
       contentPosition: 'bottom',
       type,
       timestamp: state.config.systemTime,
       status: 'read',
       image: (type === 'image' || type === 'sticker') ? 'https://picsum.photos/400/300' : undefined,
       audioDuration: type === 'audio' ? '0:12' : undefined,
-      carouselItems: type === 'carousel' ? [{ id: 'c1', title: 'Título', description: 'Descrição', image: 'https://picsum.photos/400/300', buttonText: 'Clique' }] : undefined,
-      buttons: type === 'buttons' ? [{ text: 'Botão' }] : undefined,
-      contactCard: type === 'contact_card' ? { name: 'João Silva', avatar: 'https://i.pravatar.cc/150', subtext: 'Disponível' } : undefined
+      carouselItems: type === 'carousel' ? [{ id: `c-${Date.now()}`, title: 'Título do Card', description: 'Descrição curta aqui', image: 'https://picsum.photos/400/300', buttonText: 'Saiba Mais' }] : undefined,
+      buttons: type === 'buttons' ? [{ text: 'Botão 1' }] : undefined,
+      contactCard: type === 'contact_card' ? { name: 'João Silva', avatar: 'https://ui-avatars.com/api/?name=Joao+Silva', subtext: 'Disponível' } : undefined
     };
     setState(p => ({ ...p, messages: [...p.messages, msg] }));
   };
@@ -156,7 +168,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ state, setState }) => {
                 ))}
                 <button onClick={() => {
                    const id = `c-${Date.now()}`;
-                   setState(p => ({...p, contacts: [...p.contacts, {id, name: 'Novo Contato', avatar: 'https://i.pravatar.cc/150', statusText: 'online'}]}))
+                   setState(p => ({...p, contacts: [...p.contacts, {id, name: 'Novo Contato', avatar: DEFAULT_AVATAR, statusText: 'online'}]}))
                 }} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-3xl text-[11px] font-black uppercase text-slate-400 bg-slate-50/50">+ Adicionar Participante</button>
               </div>
             </section>
@@ -169,7 +181,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ state, setState }) => {
               <h3 className="text-[11px] font-black uppercase tracking-widest mb-4 flex items-center gap-2">🤖 IA Inteligente</h3>
               <textarea 
                 className="w-full bg-white border border-emerald-400 rounded-2xl p-4 text-sm placeholder:text-slate-400 outline-none h-24 text-slate-800 font-medium"
-                placeholder="Ex: Uma conversa comercial de venda de um carro..."
+                placeholder="Ex: Uma conversa comercial..."
                 value={aiPrompt}
                 onChange={e => setAiPrompt(e.target.value)}
               />
@@ -182,19 +194,23 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ state, setState }) => {
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {(['text', 'image', 'audio', 'carousel', 'buttons', 'system', 'sticker', 'contact_card'] as const).map(type => (
-                <button 
-                  key={type}
-                  onClick={() => addMessage(type)} 
-                  className="py-3 bg-white border border-slate-200 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-600 shadow-sm hover:border-emerald-400 hover:text-emerald-600"
-                >
-                  {type === 'text' ? 'Texto' : type === 'image' ? 'Imagem' : type === 'audio' ? 'Áudio' : type === 'carousel' ? 'Carrossel' : type === 'buttons' ? 'Botões' : type === 'system' ? 'Sistema' : type === 'sticker' ? 'Figurinha' : 'Contato'}
-                </button>
-              ))}
+            <div className="space-y-4">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block px-1">Recursos de Mensagem</label>
+              <div className="grid grid-cols-2 gap-3">
+                {(['text', 'image', 'audio', 'carousel', 'buttons', 'system', 'sticker', 'contact_card'] as const).map(type => (
+                  <button 
+                    key={type}
+                    onClick={() => addMessage(type)} 
+                    className="py-3 bg-white border border-slate-200 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-600 shadow-sm hover:border-emerald-400 hover:text-emerald-600 transition-colors"
+                  >
+                    {type === 'text' ? 'Texto' : type === 'image' ? 'Imagem' : type === 'audio' ? 'Áudio' : type === 'carousel' ? 'Carrossel' : type === 'buttons' ? 'Botões' : type === 'system' ? 'Sistema' : type === 'sticker' ? 'Figurinha' : 'Contato'}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-6 pt-4 border-t border-slate-100">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block px-1">Fluxo da Conversa ({state.messages.length})</label>
               {state.messages.map((m, idx) => (
                 <div key={m.id} className="p-6 bg-slate-50 border border-slate-200 rounded-[32px] shadow-sm relative group space-y-4">
                   <div className="flex justify-between items-center">
@@ -217,13 +233,36 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ state, setState }) => {
                     </div>
                   </div>
 
-                  {(m.type === 'text' || m.type === 'system' || m.content) && (
+                  {m.type !== 'system' && (
                     <div className="space-y-1">
-                       <label className="text-[9px] font-black uppercase text-slate-400 px-1">Mensagem</label>
+                       <div className="flex justify-between items-center px-1">
+                         <label className="text-[9px] font-black uppercase text-slate-400">Texto da Mensagem</label>
+                         <select 
+                            className="text-[9px] font-bold uppercase text-slate-400 bg-transparent outline-none border-none cursor-pointer"
+                            value={m.contentPosition}
+                            onChange={e => updateMessage(idx, { contentPosition: e.target.value as any })}
+                          >
+                            <option value="top">Texto Acima</option>
+                            <option value="bottom">Texto Abaixo</option>
+                          </select>
+                       </div>
                        <textarea 
                         className="w-full text-sm font-bold bg-white border border-slate-100 rounded-2xl p-3 focus:ring-2 focus:ring-emerald-500/20 outline-none resize-none leading-relaxed text-slate-800"
                         value={m.content}
                         rows={2}
+                        placeholder="Digite o texto da mensagem..."
+                        onChange={e => updateMessage(idx, { content: e.target.value })}
+                      />
+                    </div>
+                  )}
+
+                  {m.type === 'system' && (
+                    <div className="space-y-1">
+                       <label className="text-[9px] font-black uppercase text-slate-400 px-1">Mensagem de Sistema</label>
+                       <textarea 
+                        className="w-full text-sm font-bold bg-white border border-slate-100 rounded-2xl p-3 outline-none resize-none text-slate-800"
+                        value={m.content}
+                        rows={1}
                         onChange={e => updateMessage(idx, { content: e.target.value })}
                       />
                     </div>
@@ -245,6 +284,80 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ state, setState }) => {
                         <button className="w-full py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-500">Alterar Mídia</button>
                         <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, b => updateMessage(idx, { image: b }))} />
                       </div>
+                    </div>
+                  )}
+
+                  {m.type === 'carousel' && (
+                    <div className="space-y-3">
+                       <label className="text-[9px] font-black uppercase text-slate-400">Cards do Carrossel ({m.carouselItems?.length || 0})</label>
+                       <div className="space-y-4">
+                         {m.carouselItems?.map((item, cIdx) => (
+                           <div key={item.id} className="p-4 bg-white rounded-2xl border border-slate-100 space-y-3 shadow-sm">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[10px] font-black text-emerald-600">CARD #{cIdx + 1}</span>
+                                <button onClick={() => {
+                                  const items = m.carouselItems?.filter((_, i) => i !== cIdx);
+                                  updateMessage(idx, { carouselItems: items });
+                                }} className="text-red-400 text-xs">Remover</button>
+                              </div>
+                              <input className="w-full bg-slate-50 rounded-lg px-3 py-1.5 text-xs font-bold outline-none" placeholder="Título do Card" value={item.title} onChange={e => {
+                                const items = [...(m.carouselItems || [])];
+                                items[cIdx] = { ...items[cIdx], title: e.target.value };
+                                updateMessage(idx, { carouselItems: items });
+                              }} />
+                              <textarea className="w-full bg-slate-50 rounded-lg px-3 py-1.5 text-xs outline-none h-12" placeholder="Descrição" value={item.description} onChange={e => {
+                                const items = [...(m.carouselItems || [])];
+                                items[cIdx] = { ...items[cIdx], description: e.target.value };
+                                updateMessage(idx, { carouselItems: items });
+                              }} />
+                              <div className="grid grid-cols-2 gap-2">
+                                <div className="relative">
+                                  <button className="w-full py-2 bg-slate-100 rounded-lg text-[9px] font-bold">Trocar Foto</button>
+                                  <input type="file" className="absolute inset-0 opacity-0" onChange={e => handleFileUpload(e, b => {
+                                    const items = [...(m.carouselItems || [])];
+                                    items[cIdx] = { ...items[cIdx], image: b };
+                                    updateMessage(idx, { carouselItems: items });
+                                  })} />
+                                </div>
+                                <input className="w-full bg-slate-100 rounded-lg px-2 py-1.5 text-[10px] font-bold text-center" placeholder="Texto Botão" value={item.buttonText} onChange={e => {
+                                  const items = [...(m.carouselItems || [])];
+                                  items[cIdx] = { ...items[cIdx], buttonText: e.target.value };
+                                  updateMessage(idx, { carouselItems: items });
+                                }} />
+                              </div>
+                           </div>
+                         ))}
+                       </div>
+                       <button onClick={() => {
+                          const newItem = { id: `c-${Date.now()}`, title: 'Novo Card', description: 'Descrição...', image: 'https://picsum.photos/400/300', buttonText: 'Clique' };
+                          const items = [...(m.carouselItems || []), newItem];
+                          updateMessage(idx, { carouselItems: items });
+                       }} className="w-full py-2 border-2 border-dashed border-emerald-200 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-50">+ ADICIONAR CARD</button>
+                    </div>
+                  )}
+
+                  {m.type === 'buttons' && (
+                    <div className="space-y-3">
+                       <label className="text-[9px] font-black uppercase text-slate-400">Botões de Link ({m.buttons?.length || 0})</label>
+                       <div className="space-y-2">
+                         {m.buttons?.map((btn, bIdx) => (
+                           <div key={bIdx} className="flex gap-2 items-center p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+                              <input className="flex-1 bg-transparent text-xs font-bold outline-none" placeholder="Texto do Botão" value={btn.text} onChange={e => {
+                                 const btns = [...(m.buttons || [])];
+                                 btns[bIdx] = { ...btns[bIdx], text: e.target.value };
+                                 updateMessage(idx, { buttons: btns });
+                              }} />
+                              <button onClick={() => {
+                                 const btns = m.buttons?.filter((_, i) => i !== bIdx);
+                                 updateMessage(idx, { buttons: btns });
+                              }} className="text-red-300 font-bold hover:text-red-500">×</button>
+                           </div>
+                         ))}
+                       </div>
+                       <button onClick={() => {
+                         const btns = [...(m.buttons || []), { text: 'Novo Botão' }];
+                         updateMessage(idx, { buttons: btns });
+                       }} className="w-full py-2 border-2 border-dashed border-emerald-200 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-50">+ ADICIONAR BOTÃO</button>
                     </div>
                   )}
 
@@ -281,7 +394,7 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ state, setState }) => {
         )}
 
         {activeTab === 'design' && (
-          <div className="space-y-8 animate-in slide-in-from-left-2">
+          <div className="space-y-8 animate-in slide-in-from-left-2 duration-300">
             <section className="space-y-4">
               <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b pb-2">Sistema Base</h3>
               <div className="grid grid-cols-2 gap-3">
@@ -295,16 +408,69 @@ const EditorPanel: React.FC<EditorPanelProps> = ({ state, setState }) => {
             </section>
 
             <section className="space-y-4">
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b pb-2">Papel de Parede</h3>
-              <div className="p-6 bg-slate-50 rounded-[40px] border border-slate-200">
-                <div className="flex items-center gap-4">
-                  <img src={state.config.wallpaper} className="w-16 h-16 rounded-2xl object-cover border-4 border-white shadow-xl" />
-                  <div className="relative flex-1">
-                    <button className="w-full py-3 bg-white border border-slate-200 rounded-2xl text-[11px] font-black uppercase text-slate-600 shadow-sm">Nova Imagem</button>
-                    <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, b => updateConfig('wallpaper', b))} />
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b pb-2">Papel de Parede (Wallpaper)</h3>
+              
+              <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-1">
+                <button 
+                  onClick={() => updateConfig('wallpaperType', 'color')}
+                  className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${state.config.wallpaperType === 'color' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500'}`}
+                >
+                  Cor Sólida
+                </button>
+                <button 
+                  onClick={() => updateConfig('wallpaperType', 'image')}
+                  className={`flex-1 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${state.config.wallpaperType === 'image' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500'}`}
+                >
+                  Imagem / Foto
+                </button>
+              </div>
+
+              {state.config.wallpaperType === 'color' ? (
+                <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-3">
+                   <label className="text-[10px] font-black uppercase text-slate-400 block">Cor de Fundo</label>
+                   <div className="flex gap-4 items-center">
+                     <input 
+                      type="color" 
+                      className="w-14 h-14 rounded-xl border-none p-0 cursor-pointer shadow-lg overflow-hidden" 
+                      value={state.config.backgroundColor} 
+                      onChange={e => updateConfig('backgroundColor', e.target.value)} 
+                     />
+                     <input 
+                      type="text" 
+                      className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2 text-xs font-mono font-bold"
+                      value={state.config.backgroundColor}
+                      onChange={e => updateConfig('backgroundColor', e.target.value)}
+                     />
+                   </div>
+                   <button 
+                    onClick={() => updateConfig('backgroundColor', state.config.theme === 'dark' ? '#0b141a' : '#e5ddd5')}
+                    className="w-full py-2 bg-slate-100 text-[9px] font-black uppercase text-slate-500 rounded-xl mt-2"
+                   >
+                     Resetar para Cor Padrão Tema
+                   </button>
+                </div>
+              ) : (
+                <div className="p-5 bg-slate-50 rounded-3xl border border-slate-100 space-y-4">
+                  <div className="flex flex-col gap-4">
+                    <div className="w-full h-40 rounded-2xl border-2 border-white shadow-lg bg-white overflow-hidden">
+                      <img src={state.config.wallpaper} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase text-slate-400 block">Personalizar Fundo</label>
+                       <div className="relative">
+                        <button className="w-full py-3 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-500 shadow-sm">Upload Foto</button>
+                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={e => handleFileUpload(e, b => updateConfig('wallpaper', b))} />
+                       </div>
+                       <button 
+                        onClick={() => updateConfig('wallpaper', WHATSAPP_DEFAULT_IMAGE)}
+                        className="w-full py-3 bg-slate-100 text-slate-600 rounded-xl text-[9px] font-black uppercase"
+                       >
+                         Usar Doodles (Padrão)
+                       </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </section>
           </div>
         )}

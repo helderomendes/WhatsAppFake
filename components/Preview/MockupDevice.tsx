@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { AppState, Message } from '../../types';
-import { THEME_COLORS } from '../../constants';
+import { THEME_COLORS, WHATSAPP_DEFAULT_IMAGE } from '../../constants';
 
 interface MockupDeviceProps {
   state: AppState;
@@ -23,37 +23,58 @@ const MockupDevice: React.FC<MockupDeviceProps> = ({ state, id }) => {
   const currentChatName = config.isGroup ? config.groupName : (contacts[0]?.name || 'Contato');
   const currentChatAvatar = config.isGroup ? config.groupImage : (contacts[0]?.avatar || '');
 
-  // Ícone de check duplo refinado
   const DoubleCheck = ({ read }: { read: boolean }) => (
-    <svg width="15" height="10" viewBox="0 0 16 11" fill="none" className="ml-1 inline-block translate-y-[-1px]">
-      <path d="M4.16667 6.33333L6.66667 8.83333L12.5 3" stroke={read ? "#34B7F1" : "#8696A0"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M1 6.33333L3.5 8.83333L9.33333 3" stroke={read ? "#34B7F1" : "#8696A0"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg width="16" height="15" viewBox="0 0 16 15" fill="none" className="ml-1 -mb-0.5 inline-block">
+      <path d="M1.5 8.5L4.5 11.5L10 5.5" stroke={read ? "#34B7F1" : "#8696A0"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M5.5 8.5L8.5 11.5L14 5.5" stroke={read ? "#34B7F1" : "#8696A0"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
+
+  // Background style calculation
+  const getBackgroundStyle = (): React.CSSProperties => {
+    if (config.wallpaperType === 'color') {
+      return { backgroundColor: config.backgroundColor };
+    }
+    return {
+      backgroundImage: `url(${config.wallpaper})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundColor: config.backgroundColor || colors.bg
+    };
+  };
 
   return (
     <div 
       id={id}
-      className={`relative mx-auto w-[375px] h-[812px] rounded-[50px] overflow-hidden border-[12px] border-[#1A1A1A] shadow-2xl flex flex-col font-sans transition-all ${isDark ? 'bg-[#0B141A]' : 'bg-white'}`}
-      style={{ color: colors.text }}
+      className={`relative mx-auto w-[375px] h-[812px] rounded-[50px] overflow-hidden border-[12px] border-[#1A1A1A] shadow-2xl flex flex-col font-sans transition-all`}
+      style={{ backgroundColor: colors.bg, color: colors.text }}
     >
-      {/* Notch do iPhone */}
+      {/* Notch */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-8 bg-black rounded-b-3xl z-[100] flex items-center justify-center">
         <div className="w-10 h-1 bg-[#1A1A1A] rounded-full"></div>
       </div>
 
-      {/* Papel de Parede */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <img 
-          src={config.wallpaper} 
-          crossOrigin="anonymous" 
-          className={`w-full h-full object-cover ${isDark ? 'brightness-[0.4] opacity-50' : 'opacity-80'}`}
-          alt=""
+      {/* Primary Background Layer */}
+      <div 
+        className={`absolute inset-0 z-0 pointer-events-none transition-all`}
+        style={getBackgroundStyle()}
+      />
+
+      {/* Overlay: WhatsApp Doodles subtle pattern (Only for color background) */}
+      {config.wallpaperType === 'color' && (
+        <div 
+          className={`absolute inset-0 z-0 opacity-[0.06] pointer-events-none transition-all ${isDark ? 'invert brightness-[0.2]' : ''}`}
+          style={{ 
+            backgroundImage: `url(${WHATSAPP_DEFAULT_IMAGE})`, 
+            backgroundSize: '120px', 
+            backgroundRepeat: 'repeat' 
+          }}
         />
-      </div>
+      )}
 
       <div className="relative z-10 h-full flex flex-col overflow-hidden">
-        {/* Barra de Status */}
+        {/* Status Bar */}
         <div className={`px-8 pt-10 pb-1 flex justify-between items-center text-[13px] font-bold ${isDark ? 'text-white' : 'text-black'}`}>
           <span>{config.systemTime}</span>
           <div className="flex gap-1.5 items-center">
@@ -66,13 +87,13 @@ const MockupDevice: React.FC<MockupDeviceProps> = ({ state, id }) => {
           </div>
         </div>
 
-        {/* Cabeçalho */}
+        {/* Header */}
         <div className={`px-3 py-1 flex items-center justify-between transition-colors border-b ${isDark ? 'bg-[#202C33] border-white/5' : 'bg-white border-black/5'}`}>
           <div className="flex items-center gap-1.5 py-2 overflow-hidden">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className={isDark ? 'text-white' : 'text-[#666]'}>
               <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/>
             </svg>
-            <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-slate-200">
+            <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-[#CED3D6]">
               <img src={currentChatAvatar} crossOrigin="anonymous" className="w-full h-full object-cover" alt="" />
             </div>
             <div className="flex flex-col ml-0.5 truncate">
@@ -89,7 +110,7 @@ const MockupDevice: React.FC<MockupDeviceProps> = ({ state, id }) => {
           </div>
         </div>
 
-        {/* Área de Mensagens */}
+        {/* Messages List */}
         <div className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-1 no-scrollbar scroll-smooth">
           {messages.map((msg, idx) => {
             const isMine = msg.senderId === mainUser.id;
@@ -117,7 +138,7 @@ const MockupDevice: React.FC<MockupDeviceProps> = ({ state, id }) => {
                     style={{ 
                       backgroundColor: msg.type === 'sticker' ? 'transparent' : bubbleBg, 
                       color: colors.text,
-                      padding: (msg.type === 'image' || msg.type === 'sticker') ? '2px' : '5px 8px 5px 10px'
+                      padding: (msg.type === 'image' || msg.type === 'sticker') ? '4px' : '5px 8px 5px 10px'
                     }}
                   >
                     {showTail && msg.type !== 'sticker' && (
@@ -139,12 +160,14 @@ const MockupDevice: React.FC<MockupDeviceProps> = ({ state, id }) => {
                       </div>
                     )}
 
+                    {/* Conteúdo Superior */}
                     {msg.content && msg.contentPosition === 'top' && (
                       <p className="leading-tight whitespace-pre-wrap px-1 mb-1" style={{ fontSize: `${config.fontSize}px` }}>{msg.content}</p>
                     )}
 
+                    {/* Mídia */}
                     {msg.type === 'image' && msg.image && (
-                      <div className="rounded-[11px] overflow-hidden mb-0.5">
+                      <div className="rounded-[11px] overflow-hidden mb-1 shadow-sm border border-black/5 bg-black/5">
                         <img src={msg.image} crossOrigin="anonymous" className="max-w-full h-auto block" alt="" />
                       </div>
                     )}
@@ -174,7 +197,7 @@ const MockupDevice: React.FC<MockupDeviceProps> = ({ state, id }) => {
                     )}
 
                     {msg.type === 'contact_card' && msg.contactCard && (
-                      <div className={`${isDark ? 'bg-[#202C33]' : 'bg-[#F0F2F5]'} rounded-xl p-3 min-w-[220px] mb-2 border border-black/5`}>
+                      <div className={`${isDark ? 'bg-[#202C33]' : 'bg-[#F0F2F5]'} rounded-xl p-3 min-w-[220px] mb-2 border border-black/5 shadow-sm`}>
                         <div className="flex items-center gap-3 mb-2">
                            <img src={msg.contactCard.avatar} crossOrigin="anonymous" className="w-10 h-10 rounded-full object-cover shadow-sm" alt="" />
                            <div className="flex flex-col">
@@ -188,41 +211,46 @@ const MockupDevice: React.FC<MockupDeviceProps> = ({ state, id }) => {
                       </div>
                     )}
 
-                    {msg.content && msg.contentPosition === 'bottom' && (
-                      <p className="leading-tight whitespace-pre-wrap px-1" style={{ fontSize: `${config.fontSize}px` }}>{msg.content}</p>
-                    )}
-
+                    {/* Botões */}
                     {msg.type === 'buttons' && msg.buttons && (
-                      <div className="mt-2 border-t border-black/5 flex flex-col">
+                      <div className="mt-1 border-t border-black/5 flex flex-col -mx-2 mb-1">
                         {msg.buttons.map((btn, bIdx) => (
-                          <div key={bIdx} className={`w-full py-2 text-center text-[13px] font-bold border-b last:border-b-0 border-black/5 active:bg-black/5 ${isDark ? 'text-[#00A884]' : 'text-[#008069]'}`}>
+                          <div key={bIdx} className={`w-full py-2.5 text-center text-[13px] font-bold border-b last:border-b-0 border-black/5 active:bg-black/5 ${isDark ? 'text-[#00A884]' : 'text-[#008069]'}`}>
                             {btn.text}
                           </div>
                         ))}
                       </div>
                     )}
 
+                    {/* Conteúdo Inferior */}
+                    {msg.content && msg.contentPosition === 'bottom' && (
+                      <p className="leading-tight whitespace-pre-wrap px-1 mt-1" style={{ fontSize: `${config.fontSize}px` }}>{msg.content}</p>
+                    )}
+
+                    {/* Status da Mensagem */}
                     <div className="flex justify-end items-center gap-1 mt-0.5 px-1">
                       <span className="text-[10px] opacity-50 font-medium">{msg.timestamp}</span>
                       {isMine && <DoubleCheck read={msg.status === 'read'} />}
                     </div>
 
+                    {/* Reação */}
                     {msg.reaction && (
-                      <div className="absolute -bottom-2.5 right-1 bg-white dark:bg-[#1C1C1E] rounded-full px-1.5 py-0.5 text-[12px] shadow-sm border border-black/5 flex items-center justify-center min-w-[22px] h-[22px]">
+                      <div className="absolute -bottom-2.5 right-1 bg-white dark:bg-[#1C1C1E] rounded-full px-1.5 py-0.5 text-[12px] shadow-sm border border-black/5 flex items-center justify-center min-w-[22px] h-[22px] z-20">
                         {msg.reaction}
                       </div>
                     )}
                   </div>
 
+                  {/* Carrossel */}
                   {msg.type === 'carousel' && msg.carouselItems && (
-                    <div className="flex gap-2 overflow-x-auto no-scrollbar w-full mt-2 pb-1">
+                    <div className="flex gap-2 overflow-x-auto no-scrollbar w-full mt-2 pb-2">
                       {msg.carouselItems.map(item => (
                         <div key={item.id} className={`min-w-[210px] max-w-[210px] rounded-2xl shadow-md overflow-hidden flex flex-col border border-black/5 ${isDark ? 'bg-[#202C33]' : 'bg-white'}`}>
-                          <img src={item.image} crossOrigin="anonymous" className="w-full h-32 object-cover" alt="" />
+                          <img src={item.image} crossOrigin="anonymous" className="w-full h-32 object-cover border-b border-black/5" alt="" />
                           <div className="p-3">
-                            <h4 className="font-bold text-[14px] mb-0.5 leading-tight">{item.title}</h4>
+                            <h4 className="font-bold text-[14px] mb-0.5 leading-tight truncate">{item.title}</h4>
                             <p className="text-[11px] opacity-60 mb-3 leading-tight h-[28px] overflow-hidden">{item.description}</p>
-                            <button className={`w-full py-1.5 rounded-lg text-[12px] font-bold ${isDark ? 'bg-emerald-900/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
+                            <button className={`w-full py-1.5 rounded-lg text-[12px] font-bold shadow-sm ${isDark ? 'bg-emerald-900/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600'}`}>
                               {item.buttonText}
                             </button>
                           </div>
@@ -236,7 +264,7 @@ const MockupDevice: React.FC<MockupDeviceProps> = ({ state, id }) => {
           })}
         </div>
 
-        {/* Área de Entrada */}
+        {/* Footer Input */}
         <div className={`px-2 py-2 pb-8 flex items-center gap-2 transition-colors ${isDark ? 'bg-[#0B141A]' : 'bg-[#F0F2F5]'}`}>
            <button className={`${isDark ? 'text-[#8696A0]' : 'text-[#54656F]'} p-1`}>
              <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" /></svg>
@@ -249,7 +277,6 @@ const MockupDevice: React.FC<MockupDeviceProps> = ({ state, id }) => {
             </div>
            </div>
            
-           {/* Botão de Envio Dinâmico */}
            <div className={`w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-full text-white shadow-md transition-all ${isIOS ? 'bg-[#007AFF]' : (isDark ? 'bg-[#00A884]' : 'bg-[#008069]')}`}>
              {messages.length > 0 ? (
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="ml-1"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>

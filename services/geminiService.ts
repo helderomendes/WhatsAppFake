@@ -1,9 +1,10 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
+// Function to generate realistic WhatsApp dialogues using Gemini 3
 export const generateConversation = async (topic: string, contacts: {id: string, name: string}[]) => {
+  // Always initialize a new GoogleGenAI instance before use to ensure the most current API key is used
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const contactNames = contacts.map(c => c.name).join(', ');
   
   const response = await ai.models.generateContent({

@@ -65,6 +65,8 @@ export interface ChatConfig {
   messageSpacing: number;
   showContactNames: boolean;
   wallpaper?: string;
+  wallpaperType: 'color' | 'image';
+  backgroundColor: string;
   accentColor?: string;
 }
 

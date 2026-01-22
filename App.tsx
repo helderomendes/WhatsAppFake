@@ -32,10 +32,6 @@ const App: React.FC = () => {
     showToast(`Preparando exportação (${quality.toUpperCase()})...`);
     
     try {
-      // Para evitar que o html2canvas capture a escala visual do CSS,
-      // precisamos garantir que o elemento seja processado como se estivesse em escala 1:1
-      const originalStyle = mockup.style.cssText;
-      
       const canvas = await (window as any).html2canvas(mockup, {
         scale: quality === '4k' ? 4 : 2,
         useCORS: true,
@@ -45,9 +41,13 @@ const App: React.FC = () => {
         onclone: (clonedDoc: Document) => {
           const clonedMockup = clonedDoc.getElementById('preview-mockup');
           if (clonedMockup) {
-            // Remove transformações que podem bugar a captura de fontes
             clonedMockup.style.transform = 'none';
             clonedMockup.style.margin = '0';
+            clonedMockup.style.position = 'static';
+            clonedMockup.style.boxShadow = 'none';
+            clonedMockup.style.border = 'none';
+            // Garantir que fontes não herdem escalas estranhas do pai transformado
+            clonedMockup.style.fontSize = '16px'; 
           }
         }
       });
@@ -57,7 +57,7 @@ const App: React.FC = () => {
       link.href = canvas.toDataURL('image/png');
       link.click();
       
-      showToast("Exportação concluída!");
+      showToast("Imagem salva com sucesso!");
     } catch (err) {
       console.error(err);
       showToast("Erro ao exportar", "error");
@@ -101,19 +101,19 @@ const App: React.FC = () => {
           <EditorPanel state={state} setState={setState} />
         </aside>
 
-        {/* Live Preview Area - FIXED Mockup positioned at top */}
+        {/* Live Preview Area */}
         <section className="flex-1 bg-[#F1F5F9] relative flex flex-col items-center overflow-hidden h-full">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1.5px, transparent 1.5px)', backgroundSize: '30px 30px' }}></div>
           
           <div className="flex-1 w-full flex flex-col items-center pt-10 pb-20 overflow-y-auto no-scrollbar">
-             <div className="relative transform transition-all duration-700 ease-out scale-[0.8] xl:scale-[0.9] 2xl:scale-100 origin-top h-fit mb-4">
+             <div className="relative transform transition-all duration-700 ease-out scale-[0.75] lg:scale-[0.8] xl:scale-[0.9] 2xl:scale-100 origin-top h-fit mb-4">
                 <div className="absolute -inset-20 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
                 <MockupDevice id="preview-mockup" state={state} />
              </div>
 
              <div className="flex flex-col items-center gap-2 py-10">
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Preview Digital</p>
-               <p className="text-[9px] font-medium text-slate-400 bg-white px-3 py-1 rounded-full shadow-sm">Modo de Alta Fidelidade Habilitado</p>
+               <p className="text-[9px] font-medium text-slate-400 bg-white px-3 py-1 rounded-full shadow-sm">Qualidade Máxima Habilitada</p>
              </div>
           </div>
         </section>

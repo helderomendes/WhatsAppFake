@@ -1,20 +1,23 @@
 
 import { AppState } from './types';
 
-// Papel de parede padrão do WhatsApp em Base64 (cor sólida leve com padrão sutil)
-const DEFAULT_WALLPAPER = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+// Avatar padrão do WhatsApp (Silhueta cinza)
+export const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9IiNDRUQzRDYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg==";
+
+// Imagem de fundo padrão (Doodles) - Base64 limpa e testada
+export const WHATSAPP_DEFAULT_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAUVBMVEVMaXG9vL3///+9vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL3XWclhAAAAGnRSTlMAGD7v798vL7+/37/vL+/f39+f7y8vL9/fny8/O8fUAAAAeElEQVR42mNgGAWjYBSMAlBAA00oZpBhgBqEEnSgGEE7oQRdKEZQA0uCSY6Y5IhJjpiUhEmOmOQYmBJMcowuOWKSm5gSTHKMLjlikpuYEkxyjC45YpIbiSkhS/K8pIDkBZ8S0pS6DCl00UpIE5pQYvS6DClK6EIUoxfFKBgFpAAAWzYIdW0Yp3MAAAAASUVORK5CYII=";
 
 export const INITIAL_STATE: AppState = {
   mainUser: {
     id: 'user-me',
     name: 'Você',
-    avatar: 'https://ui-avatars.com/api/?name=Eu&background=25D366&color=fff',
+    avatar: DEFAULT_AVATAR,
   },
   contacts: [
     { 
       id: 'contact-1', 
       name: 'Lillian Evaro', 
-      avatar: 'https://ui-avatars.com/api/?name=Lillian+Evaro&background=random', 
+      avatar: DEFAULT_AVATAR, 
       statusText: 'online',
       color: '#008069'
     }
@@ -32,19 +35,21 @@ export const INITIAL_STATE: AppState = {
   ],
   config: {
     platform: 'android',
-    theme: 'dark',
+    theme: 'light', // Modo claro como padrão
     iosVersion: '26',
     androidVersion: '15',
     isGroup: false,
     groupName: 'Bola S2',
-    groupImage: 'https://ui-avatars.com/api/?name=Grupo&background=008069&color=fff',
+    groupImage: DEFAULT_AVATAR,
     batteryLevel: 57,
     network: '5G',
     systemTime: '15:35',
     fontSize: 15,
     messageSpacing: 2,
     showContactNames: true,
-    wallpaper: DEFAULT_WALLPAPER,
+    wallpaperType: 'image',
+    backgroundColor: '#e5ddd5', // Cor padrão do modo claro
+    wallpaper: WHATSAPP_DEFAULT_IMAGE,
     accentColor: '#00A884'
   }
 };
@@ -76,7 +81,7 @@ export const THEME_COLORS = {
   },
   android: {
     light: {
-      bg: '#FFFFFF',
+      bg: '#E5DDD5', 
       header: '#FFFFFF',
       bubbleSent: '#E7FFDB',
       bubbleReceived: '#FFFFFF',
