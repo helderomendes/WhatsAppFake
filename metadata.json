@@ -1,0 +1,7 @@
+{
+  "name": "WhatsApp Fake Chat Generator",
+  "description": "A high-fidelity WhatsApp conversation generator for iOS and Android with AI-powered message generation and 4K export capabilities.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
