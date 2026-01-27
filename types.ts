@@ -31,6 +31,7 @@ export interface Contact {
 export interface Message {
   id: string;
   senderId: string;
+  replyToId?: string; // ID da mensagem que está sendo respondida
   content: string;
   contentPosition: 'top' | 'bottom';
   type: MessageType;
@@ -75,4 +76,23 @@ export interface AppState {
   contacts: Contact[];
   messages: Message[];
   config: ChatConfig;
+}
+
+export interface SavedTemplate {
+  id: string;
+  name: string;
+  createdAt: number;
+  state: AppState;
+}
+
+export interface ConversationTemplate {
+  id: string;
+  name: string;
+  createdAt: number;
+  messages: Message[];
+  participants: {
+    mainUser: Contact;
+    contacts: Contact[];
+  };
+  settings: ChatConfig;
 }

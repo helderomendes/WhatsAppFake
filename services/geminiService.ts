@@ -1,63 +1,64 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Function to generate realistic WhatsApp dialogues using Gemini 3
 export const generateConversation = async (topic: string, contacts: {id: string, name: string}[]) => {
-  // Always initialize a new GoogleGenAI instance before use to ensure the most current API key is used
+  // Inicializa a IA com a chave de ambiente
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const contactNames = contacts.map(c => c.name).join(', ');
   
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Atue como um gerador de diálogos de WhatsApp fidedignos.
-    Tema: "${topic}".
-    Participantes: "Eu" (o remetente principal) e os contatos: ${contactNames}.
-    
-    INSTRUÇÕES CRUPCIAIS:
-    1. Identifique quem envia cada mensagem. Use o nome exato do contato ou "Eu" para o remetente principal.
-    2. Seja criativo! Use uma mistura de tipos:
-       - 'text': Diálogo natural em PT-BR.
-       - 'image': Use 'https://picsum.photos/400/300' para fotos.
-       - 'audio': Notas de voz com duração (ex: '0:12').
-       - 'sticker': Use imagens de stickers.
-       - 'buttons': Opções interativas.
-    3. As mensagens devem ter timestamps realistas em sequência (HH:MM).
-    4. O tom deve ser informal e condizente com o tema.
-    
-    Retorne APENAS um JSON com o campo 'messages'.`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          messages: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                senderName: { type: Type.STRING, description: "Nome exato do contato ou 'Eu'" },
-                content: { type: Type.STRING },
-                type: { type: Type.STRING, enum: ['text', 'image', 'buttons', 'audio', 'sticker', 'system'] },
-                timestamp: { type: Type.STRING },
-                audioDuration: { type: Type.STRING },
-                buttons: {
-                  type: Type.ARRAY,
-                  items: {
-                    type: Type.OBJECT,
-                    properties: {
-                      text: { type: Type.STRING }
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview', // Pro model is better for complex structured dialogues
+      contents: `Gere uma conversa de WhatsApp sobre o tema: "${topic}".`,
+      config: {
+        systemInstruction: `Você é um especialista em criar diálogos realistas de WhatsApp em Português do Brasil.
+        Participantes disponíveis: "Eu" e os contatos: ${contactNames}.
+        
+        REGRAS:
+        1. Use apenas os nomes de participantes fornecidos.
+        2. "Eu" representa o dono do celular.
+        3. tipos de mensagens: 'text', 'image', 'buttons', 'audio', 'sticker', 'carousel'.
+        4. No tipo 'buttons', inclua pelo menos um botão com texto curto.
+        5. No tipo 'audio', defina 'audioDuration' (ex: '0:15').
+        6. No tipo 'carousel', forneça uma lista de cards com título e botão.
+        7. Retorne um JSON válido seguindo estritamente o schema.`,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            messages: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  senderName: { type: Type.STRING, description: "Nome do participante (Eu ou um dos contatos)" },
+                  content: { type: Type.STRING, description: "Texto da mensagem" },
+                  type: { type: Type.STRING, enum: ['text', 'image', 'buttons', 'audio', 'sticker', 'carousel'] },
+                  timestamp: { type: Type.STRING, description: "Horário no formato HH:MM" },
+                  audioDuration: { type: Type.STRING },
+                  buttons: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        text: { type: Type.STRING }
+                      }
                     }
                   }
-                }
-              },
-              required: ["senderName", "content", "type", "timestamp"]
+                },
+                required: ["senderName", "content", "type", "timestamp"]
+              }
             }
-          }
-        },
-        required: ["messages"]
+          },
+          required: ["messages"]
+        }
       }
-    }
-  });
+    });
 
-  return JSON.parse(response.text);
+    if (!response.text) throw new Error("Resposta da IA vazia");
+    return JSON.parse(response.text.trim());
+  } catch (error) {
+    console.error("Erro na geração por IA:", error);
+    throw error;
+  }
 };

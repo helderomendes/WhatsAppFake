@@ -4,22 +4,29 @@ import { AppState } from './types';
 // Avatar padrão do WhatsApp (Silhueta cinza)
 export const DEFAULT_AVATAR = "data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9IiNDRUQzRDYiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg==";
 
-// Imagem de fundo padrão (Doodles) - Base64 limpa e testada
-export const WHATSAPP_DEFAULT_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAUVBMVEVMaXG9vL3///+9vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL29vL3XWclhAAAAGnRSTlMAGD7v798vL7+/37/vL+/f39+f7y8vL9/fny8/O8fUAAAAeElEQVR42mNgGAWjYBSMAlBAA00oZpBhgBqEEnSgGEE7oQRdKEZQA0uCSY6Y5IhJjpiUhEmOmOQYmBJMcowuOWKSm5gSTHKMLjlikpuYEkxyjC45YpIbiSkhS/K8pIDkBZ8S0pS6DCl00UpIE5pQYvS6DClK6EIUoxfFKBgFpAAAWzYIdW0Yp3MAAAAASUVORK5CYII=";
+// Imagem de fundo padrão (Padrão de doodles limpo)
+export const WHATSAPP_DEFAULT_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyBAMAAADsEZWCAAAAGFBMVEVMaXH///////////////////////////+966YRAAAACHRSTlMAMv////8vP6mY9mMAAAA6SURBVDjLY2AYBaNgFIyCUUAbwMBgA8S0ARiYpAEYmGQBGBgkARiYZAEIGMoCEDDMBiBgmA1AwDAbAADonwL97v90dgAAAABJRU5ErkJggg==";
 
 export const INITIAL_STATE: AppState = {
   mainUser: {
     id: 'user-me',
-    name: 'Você',
+    name: 'Eu',
     avatar: DEFAULT_AVATAR,
   },
   contacts: [
     { 
       id: 'contact-1', 
-      name: 'Lillian Evaro', 
+      name: 'Nome 1', 
       avatar: DEFAULT_AVATAR, 
       statusText: 'online',
       color: '#008069'
+    },
+    { 
+      id: 'contact-2', 
+      name: 'Nome 2', 
+      avatar: DEFAULT_AVATAR, 
+      statusText: 'online',
+      color: '#F44336'
     }
   ],
   messages: [
@@ -35,20 +42,20 @@ export const INITIAL_STATE: AppState = {
   ],
   config: {
     platform: 'android',
-    theme: 'light', // Modo claro como padrão
+    theme: 'light',
     iosVersion: '26',
     androidVersion: '15',
     isGroup: false,
-    groupName: 'Bola S2',
+    groupName: 'Grupo Novo',
     groupImage: DEFAULT_AVATAR,
-    batteryLevel: 57,
+    batteryLevel: 95,
     network: '5G',
-    systemTime: '15:35',
+    systemTime: '10:00',
     fontSize: 15,
     messageSpacing: 2,
     showContactNames: true,
     wallpaperType: 'image',
-    backgroundColor: '#e5ddd5', // Cor padrão do modo claro
+    backgroundColor: '#e5ddd5',
     wallpaper: WHATSAPP_DEFAULT_IMAGE,
     accentColor: '#00A884'
   }

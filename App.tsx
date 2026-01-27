@@ -12,27 +12,120 @@ const App: React.FC = () => {
   });
 
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+  const [visibleCount, setVisibleCount] = useState(999);
+  const [isRecapping, setIsRecapping] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      localStorage.setItem('fake-chat-v2026-final-state', JSON.stringify(state));
-    }, 1000);
-    return () => clearTimeout(timeout);
-  }, [state]);
+    if (!isRecapping) {
+      const timeout = setTimeout(() => {
+        localStorage.setItem('fake-chat-v2026-final-state', JSON.stringify(state));
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [state, isRecapping]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
+  const captureFrame = async (): Promise<string> => {
+    const mockup = document.getElementById('preview-mockup');
+    const h2c = (window as any).html2canvas;
+    if (!mockup || !h2c) return '';
+    try {
+      const canvas = await h2c(mockup, {
+        scale: 1,
+        useCORS: true,
+        backgroundColor: null,
+        logging: false,
+      });
+      return canvas.toDataURL('image/png');
+    } catch (err) {
+      console.error("Falha ao capturar frame:", err);
+      return '';
+    }
+  };
+
+  const startRecap = async (record: boolean = false) => {
+    const gifshot = (window as any).gifshot;
+    const h2c = (window as any).html2canvas;
+
+    if (record && (!gifshot || !h2c)) {
+      showToast("Bibliotecas de captura não carregadas. Aguarde um momento.", "error");
+      return;
+    }
+
+    if (isRecapping) return;
+    setIsRecapping(true);
+    setIsRecording(record);
+    setVisibleCount(0);
+    
+    const frames: string[] = [];
+    const totalMessages = state.messages.length;
+
+    showToast(record ? "Gravando Recap (GIF)..." : "Iniciando Visualização...");
+
+    for (let i = 0; i <= totalMessages; i++) {
+      setVisibleCount(i);
+      // Espera o render e scroll
+      await new Promise(r => setTimeout(r, 800));
+      
+      if (record) {
+        const frame = await captureFrame();
+        if (frame) frames.push(frame);
+      }
+      
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    if (record && frames.length > 0) {
+      showToast("Processando GIF, aguarde...");
+      if (gifshot) {
+        gifshot.createGIF({
+          images: frames,
+          gifWidth: 375,
+          gifHeight: 812,
+          interval: 0.6,
+          numFrames: frames.length,
+          frameDuration: 10,
+          fontWeight: 'normal',
+          fontFamily: 'sans-serif',
+        }, (obj: any) => {
+          if (!obj.error) {
+            const link = document.createElement('a');
+            link.download = `recap_${new Date().getTime()}.gif`;
+            link.href = obj.image;
+            link.click();
+            showToast("GIF salvo com sucesso!");
+          } else {
+            showToast("Erro ao gerar GIF", "error");
+            console.error(obj.error);
+          }
+        });
+      } else {
+        showToast("Erro: gifshot não disponível", "error");
+      }
+    }
+
+    setIsRecapping(false);
+    setIsRecording(false);
+    if (!record) showToast("Recap finalizado!");
+  };
+
   const handleExport = async (quality: 'normal' | '4k') => {
     const mockup = document.getElementById('preview-mockup');
-    if (!mockup) return;
+    const h2c = (window as any).html2canvas;
+    if (!mockup || !h2c) {
+      showToast("Biblioteca de exportação não carregada.", "error");
+      return;
+    }
 
     showToast(`Preparando exportação (${quality.toUpperCase()})...`);
     
     try {
-      const canvas = await (window as any).html2canvas(mockup, {
+      const canvas = await h2c(mockup, {
         scale: quality === '4k' ? 4 : 2,
         useCORS: true,
         allowTaint: false,
@@ -46,8 +139,6 @@ const App: React.FC = () => {
             clonedMockup.style.position = 'static';
             clonedMockup.style.boxShadow = 'none';
             clonedMockup.style.border = 'none';
-            // Garantir que fontes não herdem escalas estranhas do pai transformado
-            clonedMockup.style.fontSize = '16px'; 
           }
         }
       });
@@ -73,21 +164,29 @@ const App: React.FC = () => {
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
           </div>
           <div>
-            <h1 className="text-lg font-black tracking-tight text-slate-800 leading-none">WhatsApp Fake</h1>
-            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mt-0.5 block">Gerador Premium 2026</span>
+            <h1 className="text-xl font-black tracking-tight text-slate-800 leading-none">Gerador de Conversas</h1>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           <button 
+            disabled={isRecapping}
+            onClick={() => startRecap(true)}
+            className={`px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-sm ${isRecording ? 'bg-red-500 text-white recording-pulse' : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50'}`}
+          >
+            {isRecording ? 'Gravando...' : 'Gravar GIF'}
+          </button>
+          <button 
+            disabled={isRecapping}
             onClick={() => handleExport('normal')}
-            className="px-5 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+            className="px-5 py-2.5 bg-white text-slate-600 border border-slate-200 rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm disabled:opacity-50"
           >
             PNG Full HD
           </button>
           <button 
+             disabled={isRecapping}
              onClick={() => handleExport('4k')}
-             className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-black shadow-xl shadow-slate-200 transition-all active:scale-95"
+             className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-black shadow-xl shadow-slate-200 transition-all disabled:opacity-50"
           >
             Exportar 4K
           </button>
@@ -98,7 +197,7 @@ const App: React.FC = () => {
       <main className="flex-1 flex overflow-hidden">
         {/* Editor (Sidebar) */}
         <aside className="w-[35%] min-w-[420px] max-w-[500px]">
-          <EditorPanel state={state} setState={setState} />
+          <EditorPanel state={state} setState={setState} onStartRecap={() => startRecap(false)} />
         </aside>
 
         {/* Live Preview Area */}
@@ -108,12 +207,17 @@ const App: React.FC = () => {
           <div className="flex-1 w-full flex flex-col items-center pt-10 pb-20 overflow-y-auto no-scrollbar">
              <div className="relative transform transition-all duration-700 ease-out scale-[0.75] lg:scale-[0.8] xl:scale-[0.9] 2xl:scale-100 origin-top h-fit mb-4">
                 <div className="absolute -inset-20 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
-                <MockupDevice id="preview-mockup" state={state} />
+                <MockupDevice id="preview-mockup" state={state} visibleCount={visibleCount} />
              </div>
 
              <div className="flex flex-col items-center gap-2 py-10">
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Preview Digital</p>
-               <p className="text-[9px] font-medium text-slate-400 bg-white px-3 py-1 rounded-full shadow-sm">Qualidade Máxima Habilitada</p>
+               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Preview em Tempo Real</p>
+               {isRecapping && (
+                 <div className={`mt-4 flex items-center gap-2 px-6 py-2 ${isRecording ? 'bg-red-600' : 'bg-emerald-600'} text-white rounded-full animate-pulse font-bold text-xs uppercase tracking-widest`}>
+                   <div className="w-2 h-2 bg-white rounded-full"></div>
+                   {isRecording ? 'Capturando Frames...' : 'Visualizando Recap...'}
+                 </div>
+               )}
              </div>
           </div>
         </section>
