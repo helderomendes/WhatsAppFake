@@ -15,6 +15,18 @@ const App: React.FC = () => {
   const [isRecapping, setIsRecapping] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
 
+    // Aguarda carregamento das bibliotecas
+  useEffect(() => {
+    const checkLibs = setInterval(() => {
+      const gifshot = (window as any).gifshot;
+      const h2c = (window as any).html2canvas;
+      if (gifshot && h2c) {
+        clearInterval(checkLibs);
+      }
+    }, 100);
+    return () => clearInterval(checkLibs);
+  }, []);
+
   useEffect(() => {
     if (!isRecapping) {
       const timeout = setTimeout(() => {
@@ -54,8 +66,13 @@ const App: React.FC = () => {
     const h2c = (window as any).html2canvas;
 
     if (record && (!gifshot || !h2c)) {
+        // Aguarda 2 segundos antes de mostrar erro (dá tempo das libs carregarem)
+    await new Promise(r => setTimeout(r, 2000));
+    
+    if (record && (!(window as any).gifshot || !(window as any).html2canvas)) {
       showToast("Bibliotecas de captura não carregadas. Recarregue a página.", "error");
       return;
+    }  return;
     }
 
     if (isRecapping) return;
