@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { INITIAL_STATE } from './constants';
 import { AppState } from './types';
@@ -33,7 +32,9 @@ const App: React.FC = () => {
   const captureFrame = async (): Promise<string> => {
     const mockup = document.getElementById('preview-mockup');
     const h2c = (window as any).html2canvas;
+
     if (!mockup || !h2c) return '';
+
     try {
       const canvas = await h2c(mockup, {
         scale: 1,
@@ -53,11 +54,12 @@ const App: React.FC = () => {
     const h2c = (window as any).html2canvas;
 
     if (record && (!gifshot || !h2c)) {
-      showToast("Bibliotecas de captura não carregadas. Aguarde um momento.", "error");
+      showToast("Bibliotecas de captura não carregadas. Recarregue a página.", "error");
       return;
     }
 
     if (isRecapping) return;
+
     setIsRecapping(true);
     setIsRecording(record);
     setVisibleCount(0);
@@ -69,29 +71,30 @@ const App: React.FC = () => {
 
     for (let i = 0; i <= totalMessages; i++) {
       setVisibleCount(i);
-      // Espera o render e scroll
-      await new Promise(r => setTimeout(r, 800));
+      
+      // Aguarda render do React
+      await new Promise(r => setTimeout(r, 300));
       
       if (record) {
         const frame = await captureFrame();
         if (frame) frames.push(frame);
       }
       
-      await new Promise(r => setTimeout(r, 400));
+      // Pausa extra para efeito visual
+      await new Promise(r => setTimeout(r, 200));
     }
 
     if (record && frames.length > 0) {
       showToast("Processando GIF, aguarde...");
+      
       if (gifshot) {
         gifshot.createGIF({
           images: frames,
           gifWidth: 375,
           gifHeight: 812,
-          interval: 0.6,
+          interval: 0.5,
           numFrames: frames.length,
-          frameDuration: 10,
-          fontWeight: 'normal',
-          fontFamily: 'sans-serif',
+          frameDuration: 8,
         }, (obj: any) => {
           if (!obj.error) {
             const link = document.createElement('a');
@@ -117,6 +120,7 @@ const App: React.FC = () => {
   const handleExport = async (quality: 'normal' | '4k') => {
     const mockup = document.getElementById('preview-mockup');
     const h2c = (window as any).html2canvas;
+
     if (!mockup || !h2c) {
       showToast("Biblioteca de exportação não carregada.", "error");
       return;
@@ -176,6 +180,7 @@ const App: React.FC = () => {
           >
             {isRecording ? 'Gravando...' : 'Gravar GIF'}
           </button>
+
           <button 
             disabled={isRecapping}
             onClick={() => handleExport('normal')}
@@ -183,10 +188,11 @@ const App: React.FC = () => {
           >
             PNG Full HD
           </button>
+
           <button 
-             disabled={isRecapping}
-             onClick={() => handleExport('4k')}
-             className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-black shadow-xl shadow-slate-200 transition-all disabled:opacity-50"
+            disabled={isRecapping}
+            onClick={() => handleExport('4k')}
+            className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-black shadow-xl shadow-slate-200 transition-all disabled:opacity-50"
           >
             Exportar 4K
           </button>
@@ -205,20 +211,20 @@ const App: React.FC = () => {
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1.5px, transparent 1.5px)', backgroundSize: '30px 30px' }}></div>
           
           <div className="flex-1 w-full flex flex-col items-center pt-10 pb-20 overflow-y-auto no-scrollbar">
-             <div className="relative transform transition-all duration-700 ease-out scale-[0.75] lg:scale-[0.8] xl:scale-[0.9] 2xl:scale-100 origin-top h-fit mb-4">
-                <div className="absolute -inset-20 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
-                <MockupDevice id="preview-mockup" state={state} visibleCount={visibleCount} />
-             </div>
+            <div className="relative transform transition-all duration-700 ease-out scale-[0.75] lg:scale-[0.8] xl:scale-[0.9] 2xl:scale-100 origin-top h-fit mb-4">
+              <div className="absolute -inset-20 bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+              <MockupDevice id="preview-mockup" state={state} visibleCount={visibleCount} />
+            </div>
 
-             <div className="flex flex-col items-center gap-2 py-10">
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Preview em Tempo Real</p>
-               {isRecapping && (
-                 <div className={`mt-4 flex items-center gap-2 px-6 py-2 ${isRecording ? 'bg-red-600' : 'bg-emerald-600'} text-white rounded-full animate-pulse font-bold text-xs uppercase tracking-widest`}>
-                   <div className="w-2 h-2 bg-white rounded-full"></div>
-                   {isRecording ? 'Capturando Frames...' : 'Visualizando Recap...'}
-                 </div>
-               )}
-             </div>
+            <div className="flex flex-col items-center gap-2 py-10">
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Preview em Tempo Real</p>
+              {isRecapping && (
+                <div className={`mt-4 flex items-center gap-2 px-6 py-2 ${isRecording ? 'bg-red-600' : 'bg-emerald-600'} text-white rounded-full animate-pulse font-bold text-xs uppercase tracking-widest`}>
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                  {isRecording ? 'Capturando Frames...' : 'Visualizando Recap...'}
+                </div>
+              )}
+            </div>
           </div>
         </section>
       </main>
