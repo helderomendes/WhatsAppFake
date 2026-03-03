@@ -53,6 +53,14 @@ const App: React.FC = () => {
         useCORS: true,
         backgroundColor: null,
         logging: false,
+        width: 375,
+        height: 812,
+        onclone: (clonedDoc: Document) => {
+          const clonedMockup = clonedDoc.getElementById('preview-mockup');
+          if (clonedMockup?.parentElement) {
+            clonedMockup.parentElement.style.transform = 'none';
+          }
+        },
       });
       return canvas.toDataURL('image/png');
     } catch (err) {
@@ -152,14 +160,15 @@ const App: React.FC = () => {
         allowTaint: false,
         backgroundColor: null,
         logging: false,
+        width: 375,
+        height: 812,
         onclone: (clonedDoc: Document) => {
           const clonedMockup = clonedDoc.getElementById('preview-mockup');
-          if (clonedMockup) {
-            clonedMockup.style.transform = 'none';
-            clonedMockup.style.margin = '0';
-            clonedMockup.style.position = 'static';
-            clonedMockup.style.boxShadow = 'none';
-            clonedMockup.style.border = 'none';
+          if (clonedMockup?.parentElement) {
+            // Remove only the viewport-responsive scale on the wrapper so
+            // html2canvas captures the phone at its natural 375×812 size,
+            // exactly as it appears in the preview (border, shadow and all).
+            clonedMockup.parentElement.style.transform = 'none';
           }
         }
       });
